@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini Soccer Parser</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 15px;
+        background: #f8f9fa;
+        color: #333;
+        max-width: 600px;
+        margin: auto;
+      }
+      h2,
+      h3 {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        resize: vertical;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 10px 16px;
+        margin-top: 10px;
+        font-size: 14px;
+        border: none;
+        border-radius: 6px;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+        width: 100%;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 15px;
+        font-size: 14px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background: #f1f1f1;
+      }
+      .paid {
+        background-color: #d4edda;
+      }
+      .unpaid {
+        background-color: #f8d7da;
+      }
+      td button {
+        padding: 5px 10px;
+        font-size: 12px;
+        border: none;
+        border-radius: 4px;
+        background: #28a745;
+        color: white;
+        width: 100%;
+      }
+      td button:hover {
+        background: #218838;
+      }
+      pre {
+        background: #fff;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 12px;
+        overflow-x: auto;
+      }
+      @media (max-width: 480px) {
+        th,
+        td {
+          font-size: 12px;
+          padding: 6px;
+        }
+        textarea {
+          font-size: 12px;
+        }
+        button {
+          font-size: 12px;
+          padding: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Mini Soccer Parser</h2>
+    <textarea
+      id="input"
+      rows="8"
+      placeholder="Paste teks dari WA di sini..."
+    ></textarea>
+    <button onclick="parseText()">Parse</button>
+
+    <h3>Daftar Pemain</h3>
+    <table id="playerTable">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Nama</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Data JSON</h3>
+    <pre id="output"></pre>
+
+    <script>
+      let players = [];
+
+      function parseText() {
+        const text = document.getElementById("input").value;
+        const lines = text.split("\n");
+
+        let role = null;
+        players = [];
+
+        lines.forEach((line) => {
+          const trimmed = line.trim();
+
+          if (
+            !trimmed ||
+            trimmed.toLowerCase().startsWith("note") ||
+            trimmed.toLowerCase().includes("fee")
+          ) {
+            return;
+          }
+
+          if (
+            trimmed.toLowerCase() === "kiper" ||
+            trimmed.toLowerCase() === "player"
+          ) {
+            role = trimmed;
+            return;
+          }
+
+          const match = trimmed.match(/^(\d+)\.\s*(.+?)(✅️?)?$/);
+          if (match) {
+            const nomor = match[1];
+            const nama = match[2].replace(/✅️?/, "").trim();
+            const status = trimmed.includes("✅")
+              ? "Sudah Bayar"
+              : "Belum Bayar";
+
+            players.push({
+              nomor,
+              nama,
+              role: role || "Unknown",
+              status,
+            });
+          }
+        });
+
+        renderTable();
+      }
+
+      function renderTable() {
+        const tbody = document.querySelector("#playerTable tbody");
+        tbody.innerHTML = "";
+
+        players.forEach((p, index) => {
+          const tr = document.createElement("tr");
+          tr.className = p.status === "Sudah Bayar" ? "paid" : "unpaid";
+
+          tr.innerHTML = `
+            <td>${p.nomor}</td>
+            <td>${p.nama}</td>
+            <td>${p.role}</td>
+            <td>${p.status}</td>
+            <td><button onclick="toggleStatus(${index})">Toggle</button></td>
+        `;
+
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById("output").textContent = JSON.stringify(
+          players,
+          null,
+          2
+        );
+      }
+
+      function toggleStatus(index) {
+        players[index].status =
+          players[index].status === "Sudah Bayar"
+            ? "Belum Bayar"
+            : "Sudah Bayar";
+        renderTable();
+      }
+    </script>
+  </body>
+</html>
